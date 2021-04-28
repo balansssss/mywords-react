@@ -1,0 +1,76 @@
+@import '../../components/style/Styles.module';
+
+.container {
+
+  & .container_column {
+
+    & .container_name {
+      animation: slideDown 1.5s ease;
+    }
+
+    & .show_list{
+      animation: show 1.5s ease;
+    }
+
+    & > span{
+      color: $page_color;
+      border: none;
+      position: absolute;
+      bottom: 15px;
+      padding-bottom: 5px;
+      cursor: pointer;
+      background-image: linear-gradient(currentColor, currentColor);
+      background-position: 0% 100%;
+      background-repeat: no-repeat;
+      background-size: 0% 2px;
+      transition: background-size .5s;
+
+      &:hover {
+        background-size: 100% 2px;
+      }
+    }
+  }
+
+  form {
+    animation: slideUp 1.5s ease;
+  }
+
+}
+
+@keyframes slideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-200px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(200px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes show {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+
+
+
