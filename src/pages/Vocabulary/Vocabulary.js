@@ -2,6 +2,8 @@ import React from 'react'
 import classes from './Vocabulary.module.scss'
 import NavItem from '../../components/NavItem/NavItem'
 import Input from '../../components/Input/Input'
+import EditIcon from './pencil.svg'
+import DeleteIcon from './cancel.svg'
 
 class Vocabulary extends React.Component {
     state = {
@@ -30,8 +32,15 @@ class Vocabulary extends React.Component {
 
     inputChangeHandler = event => {
         const value = event.target.value
+        const resultWords =[]
+        this.state.words.forEach(word=>{
+            if (word[this.state.typeSearch].toLowerCase().indexOf(value.toLowerCase()) !== -1) {
+                resultWords.push(word)
+            }
+        })
         this.setState({
-            stringSearch: value
+            stringSearch: value,
+            resultsSearch: resultWords
         })
     }
 
@@ -41,6 +50,22 @@ class Vocabulary extends React.Component {
             typeSearch
         })
 
+    }
+
+    renderTr = (arr) => {
+        return arr.map((word, index)=>{
+            return (
+                <tr key={`word_${index}`}>
+                    <td>{index+1}</td>
+                    <td>{word.original}</td>
+                    <td>{word.translate}</td>
+                    <td className={classes.icon}>
+                        <img src={EditIcon} alt="Редактировать" title="Редактировать"/>
+                        <img src={DeleteIcon} alt="Удалить" title="Удалить"/>
+                    </td>
+                </tr>
+            )
+        })
     }
 
     render() {
@@ -59,8 +84,8 @@ class Vocabulary extends React.Component {
                                 onChange={this.inputChangeHandler}
                             />
                             <select onChange={this.selectChangeHandler}>
-                                <option value='original_word'>Поиск по слову</option>
-                                <option value='translate_word'>Поиск по переводу</option>
+                                <option value='original'>Поиск по слову</option>
+                                <option value='translate'>Поиск по переводу</option>
                             </select>
                         </form>
 
@@ -75,18 +100,11 @@ class Vocabulary extends React.Component {
                             </thead>
                             <tbody>
                                 {
-                                    this.state.words.length > 0
-                                    ? this.state.words.map((word, index)=>{
-                                        return (
-                                            <tr key={`word_${index}`}>
-                                                <td>{index+1}</td>
-                                                <td>{word.original}</td>
-                                                <td>{word.translate}</td>
-                                                <td>...</td>
-                                            </tr>
-                                        )
-                                    })
-                                    : <tr><td colSpan='3'>В словаре еще нет слов.</td></tr>
+                                    this.state.resultsSearch.length === 0
+                                    ?   this.state.words.length > 0 && this.state.stringSearch.length === 0
+                                        ? this.renderTr(this.state.words)
+                                        : <tr><td colSpan='4'>Слова не найдены.</td></tr>
+                                    : this.renderTr(this.state.resultsSearch)
                                 }
                             </tbody>
                         </table>
