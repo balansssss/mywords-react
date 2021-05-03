@@ -49,7 +49,30 @@ class Vocabulary extends React.Component {
         this.setState({
             typeSearch
         })
+    }
 
+    editWord = id => {
+        const words =[...this.state.words]
+        const editOriginal = prompt('Слово', words[id].original)
+        const editTranslate = prompt('Перевод', words[id].translate)
+        if (editOriginal && editTranslate) {
+            const word = {
+                original: editOriginal,
+                translate: editTranslate
+            }
+            words.splice(id,1,word)
+            this.setState({
+                words
+            })
+        }
+    }
+
+    deleteWord = id => {
+        const words = [...this.state.words]
+        words.splice(id,1)
+        this.setState({
+            words
+        })
     }
 
     renderTr = (arr) => {
@@ -60,8 +83,8 @@ class Vocabulary extends React.Component {
                     <td>{word.original}</td>
                     <td>{word.translate}</td>
                     <td className={classes.icon}>
-                        <img src={EditIcon} alt="Редактировать" title="Редактировать"/>
-                        <img src={DeleteIcon} alt="Удалить" title="Удалить"/>
+                        <img src={EditIcon} alt="Редактировать" title="Редактировать" onClick={this.editWord.bind(this, index)}/>
+                        <img src={DeleteIcon} alt="Удалить" title="Удалить" onClick={this.deleteWord.bind(this, index)}/>
                     </td>
                 </tr>
             )

@@ -18,22 +18,6 @@
         margin: 5px;
       }
 
-      & > select {
-        background: none;
-        border: none;
-        border-bottom: 1px solid $white;
-        height: 25px;
-        color: $white;
-        outline: none;
-
-        & > option {
-          color: $black;
-
-          &:hover {
-            background: $dark-blue;
-          }
-        }
-      }
     }
 
     & .words {

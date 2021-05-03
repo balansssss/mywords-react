@@ -8,10 +8,12 @@ const Input = props => {
                 name={props.name}
                 type={props.type}
                 placeholder={props.placeholder}
+                autoComplete={props.autocomplete || 'off'}
                 value={props.value}
                 title={props.title}
                 onChange={props.onChange}
                 onClick={props.onClick}
+                readOnly={props.readonly}
             />
             {props.children}
         </React.Fragment>
