@@ -2,10 +2,29 @@ import React from 'react'
 import classes from './Auth.module.scss'
 import logo from './logo2.png'
 import translate from './translate.png'
+import Input from "../../components/Input/Input";
 
 class Auth extends React.Component {
     state = {
-        showForm: false
+        showForm: false,
+        formInputs: [
+            {
+                type: 'email',
+                name: 'email',
+                placeholder: 'Email',
+                value: ''
+            },
+            {
+                type: 'password',
+                name: 'password',
+                placeholder: 'Пароль',
+                value: ''
+            },
+            {
+                type: 'submit',
+                value: 'Войти'
+            }
+        ]
     }
 
     showForm = () => {
@@ -17,6 +36,18 @@ class Auth extends React.Component {
     hideForm = () => {
         this.setState({
             showForm: false
+        })
+    }
+
+    onChangeHandler = (event, inputName) => {
+        const formInputs = [...this.state.formInputs]
+        formInputs.forEach(input => {
+            if (input.name === inputName) {
+                input.value = event.target.value
+            }
+        })
+        this.setState({
+            formInputs
         })
     }
 
@@ -35,14 +66,20 @@ class Auth extends React.Component {
                         <span className={classes.back_button} onClick={this.hideForm}>Назад &#8635;</span>
                         <form id="signInForm" className={classes.forms}>
                             <label>Авторизация</label>
-                            <input type="email" placeholder="Email" name="email" required/>
-                            <input type="password" placeholder="Пароль" name="password" required minLength="6"
-                                   maxLength="16"/>
-                            <input type="submit" value="Войти"/>
+                            { this.state.formInputs.map((input, index) => {
+                                return <Input
+                                    key={index}
+                                    name={input.name}
+                                    type={input.type}
+                                    placeholder={input.placeholder}
+                                    value={input.value || ''}
+                                    onChange={input.type !== 'submit' ? event => this.onChangeHandler(event, input.name) : null}
+                                />
+                            })}
                         </form>
                     </div>
 
-                    : <div className={classes.content+' '+classes.slideDown}>
+                    : <div className={classes.content + ' ' + classes.slideDown}>
                         <div className={classes.content_info}>
                             <h2>Твой<br/>персональный<br/>словарь</h2>
                             <div className={classes.content_footer}>

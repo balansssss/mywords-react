@@ -4,23 +4,13 @@ import NavItem from '../../components/NavItem/NavItem'
 import Input from '../../components/Input/Input'
 import EditIcon from './pencil.svg'
 import DeleteIcon from './cancel.svg'
+import axios from '../../axios/axios'
+import Loader from '../../components/Loader/Loader'
 
 class Vocabulary extends React.Component {
     state = {
-        words: [
-            {
-                original: 'Hello',
-                translate: 'Привет'
-            },
-            {
-                original: 'World',
-                translate: 'Мир'
-            },
-            {
-                original: 'Good',
-                translate: 'Хорошо'
-            }
-        ],
+        loading: true,
+        words: [],
         stringSearch: '',
         typeSearch: 'original',
         resultsSearch: []
@@ -51,43 +41,61 @@ class Vocabulary extends React.Component {
         })
     }
 
-    editWord = id => {
-        const words =[...this.state.words]
+    editWord = async id => {
+        const words = {...this.state.words}
         const editOriginal = prompt('Слово', words[id].original)
         const editTranslate = prompt('Перевод', words[id].translate)
         if (editOriginal && editTranslate) {
             const word = {
-                original: editOriginal,
-                translate: editTranslate
+                original: editOriginal[0].toUpperCase() + editOriginal.substring(1),
+                translate: editTranslate[0].toUpperCase() + editTranslate.substring(1)
             }
-            words.splice(id,1,word)
-            this.setState({
-                words
-            })
+            try {
+                await axios.put(`/words/${id}.json`, word)
+                words[id] = word
+                this.setState({
+                    words
+                })
+            } catch (e) {
+                console.log(e)
+            }
         }
     }
 
-    deleteWord = id => {
-        const words = [...this.state.words]
-        words.splice(id,1)
-        this.setState({
-            words
-        })
+    deleteWord = async id => {
+        const words = {...this.state.words}
+        try {
+            await axios.delete(`/words/${id}.json`)
+            delete words[id]
+            this.setState({
+                words
+            })
+        } catch(e) {
+            console.log('Error', e)
+        }
     }
 
     renderTr = (arr) => {
-        return arr.map((word, index)=>{
+        return Object.keys(arr).map((word, index)=>{
             return (
                 <tr key={`word_${index}`}>
                     <td>{index+1}</td>
-                    <td>{word.original}</td>
-                    <td>{word.translate}</td>
+                    <td>{arr[word].original}</td>
+                    <td>{arr[word].translate}</td>
                     <td className={classes.icon}>
-                        <img src={EditIcon} alt="Редактировать" title="Редактировать" onClick={this.editWord.bind(this, index)}/>
-                        <img src={DeleteIcon} alt="Удалить" title="Удалить" onClick={this.deleteWord.bind(this, index)}/>
+                        <img src={EditIcon} alt="Редактировать" title="Редактировать" onClick={this.editWord.bind(this, word)}/>
+                        <img src={DeleteIcon} alt="Удалить" title="Удалить" onClick={this.deleteWord.bind(this, word)}/>
                     </td>
                 </tr>
             )
+        })
+    }
+
+    componentDidMount = async () => {
+        const words = await axios.get('/words.json')
+        this.setState({
+            loading: false,
+            words: words.data
         })
     }
 
@@ -112,25 +120,31 @@ class Vocabulary extends React.Component {
                             </select>
                         </form>
 
-                        <table className={classes.words}>
-                            <thead>
-                                <tr>
-                                    <th>№</th>
-                                    <th>Слово</th>
-                                    <th>Перевод</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {
-                                    this.state.resultsSearch.length === 0
-                                    ?   this.state.words.length > 0 && this.state.stringSearch.length === 0
-                                        ? this.renderTr(this.state.words)
-                                        : <tr><td colSpan='4'>Слова не найдены.</td></tr>
-                                    : this.renderTr(this.state.resultsSearch)
-                                }
-                            </tbody>
-                        </table>
+                        {
+                            this.state.loading
+                                ? <Loader/>
+                                : <table className={classes.words}>
+                                        <thead>
+                                        <tr>
+                                            <th>№</th>
+                                            <th>Слово</th>
+                                            <th>Перевод</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {
+                                            this.state.resultsSearch.length === 0
+                                                ? this.state.words && this.state.stringSearch.length === 0
+                                                ? this.renderTr(this.state.words)
+                                                : <tr>
+                                                    <td colSpan='4'>Слова не найдены.</td>
+                                                </tr>
+                                                : this.renderTr(this.state.resultsSearch)
+                                        }
+                                        </tbody>
+                                    </table>
+                        }
                     </div>
 
                     <NavItem title='Главная' path='/' className='nav_right' />

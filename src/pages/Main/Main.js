@@ -1,7 +1,8 @@
 import React from 'react'
 import classes from './Main.module.scss'
-import NavItem from "../../components/NavItem/NavItem";
-import Input from "../../components/Input/Input";
+import NavItem from '../../components/NavItem/NavItem'
+import Input from '../../components/Input/Input'
+import axios from '../../axios/axios'
 
 class Main extends React.Component {
     state = {
@@ -25,8 +26,7 @@ class Main extends React.Component {
                 type: 'submit',
                 value: 'Добавить',
             }
-        ],
-        words: []
+        ]
     }
 
     wheelHandler = event => {
@@ -61,30 +61,33 @@ class Main extends React.Component {
         })
     }
 
-    onSubmitHandler = event => {
+    onSubmitHandler = async event => {
         event.preventDefault()
         let original = ''
         let translate = ''
         const inputs = [...this.state.inputs]
         inputs.forEach(input => {
             if (input.name === 'word_original') {
-                original = input.value
+                original = input.value[0].toUpperCase() + input.value.substring(1)
                 input.value = ''
             }
             if (input.name === 'word_translate') {
-                translate = input.value
+                translate = input.value[0].toUpperCase() + input.value.substring(1)
                 input.value = ''
             }
         })
         if (original.length < 2 || translate.length < 2) {
             alert('Укажите правильную длину слова/перевода.')
         } else {
-            const words = [...this.state.words]
-            words.push({original, translate})
-            this.setState({
-                inputs,
-                words
-            })
+            try {
+                await axios.post('/words.json',{original, translate})
+                alert('Слово добавлено!')
+                this.setState({
+                    inputs
+                })
+            } catch(e) {
+                console.log(e)
+            }
         }
     }
 
@@ -96,6 +99,7 @@ class Main extends React.Component {
                 {
                     this.state.onWheel
                         ? <form onSubmit={this.onSubmitHandler}>
+                            <span style={{textAlign: 'center'}}>Новое слово</span>
                             {this.state.inputs.map((input, index)=>{
                                 return <Input
                                     key={index}

@@ -2,6 +2,7 @@ import React from 'react'
 import classes from './Tests.module.scss'
 import Input from '../../components/Input/Input'
 import NavItem from '../../components/NavItem/NavItem'
+import axios from '../../axios/axios'
 
 class Tests extends React.Component {
 
@@ -35,6 +36,7 @@ class Tests extends React.Component {
                 type: 'number',
                 name: 'min',
                 title: 'Номер слова - начало теста',
+                min: 1,
                 value: 1,
             },
             {
@@ -48,16 +50,7 @@ class Tests extends React.Component {
                 value: 'Начать',
             }
         ],
-        test: [
-            {
-                original: 'Hello',
-                translate: 'Привет'
-            },
-            {
-                original: 'World',
-                translate: 'Мир'
-            }
-        ],
+        test: {},
         currentQuestion: 0,
         points: 0
     }
@@ -96,23 +89,38 @@ class Tests extends React.Component {
         })
     }
 
-    startTest = event => {
+    startTest = async event => {
         event.preventDefault()
         const min = Number(this.state.inputsParameters[0].value)
         const max = Number(this.state.inputsParameters[1].value)
-        if (min <= max) {
+        if (min <= max && min >= Number(this.state.inputsParameters[0].min)) {
             const typeTest = this.state.typeTest
             const inputsTest = [...this.state.inputsTest]
-            inputsTest.forEach(input => {
-                if (input.name === `word_${typeTest}`) {
-                    input.value = this.state.test[0][typeTest]
-                    input.readonly = true
-                }
-            })
-            this.setState({
-                startTest: true,
-                inputsTest
-            })
+            try {
+                let test = {}
+                await axios.get('/words.json').then(response => {
+                    Object.keys(response.data).slice(min-1,max).map(i => {
+                        test[i] = response.data[i]
+                    })
+                })
+
+                this.setState({
+                    test
+                })
+                inputsTest.forEach(input => {
+                    if (input.name === `word_${typeTest}`) {
+                        input.value = this.state.test[Object.keys(this.state.test)[0]][typeTest]
+                        input.readonly = true
+                    }
+                })
+                this.setState({
+                    startTest: true,
+                    inputsTest
+                })
+            } catch(e) {
+                console.log(e)
+            }
+
         } else {
             alert('Некоректнные данные')
         }
@@ -128,12 +136,12 @@ class Tests extends React.Component {
         let checkType = this.state.typeTest === 'original' ? 'translate' : 'original'
         inputsTest.forEach(input => {
             if (input.name === `word_${checkType}`) {
-                if (input.value.toLowerCase() === this.state.test[currentQuestion][checkType].toLowerCase()) {
+                if (input.value.toLowerCase() === this.state.test[Object.keys(this.state.test)[currentQuestion]][checkType].toLowerCase()) {
                     points++
                 }
                 input.value = ''
-            } else if (input.name === `word_${this.state.typeTest}` && currentQuestion + 1 < this.state.test.length) {
-                input.value = this.state.test[currentQuestion + 1][this.state.typeTest]
+            } else if (input.name === `word_${this.state.typeTest}` && currentQuestion + 1 < Object.keys(this.state.test).length) {
+                input.value = this.state.test[Object.keys(this.state.test)[currentQuestion + 1]][this.state.typeTest]
             }
         })
         currentQuestion++
@@ -143,7 +151,7 @@ class Tests extends React.Component {
             points,
             startTest
         })
-        if (currentQuestion === this.state.test.length) {
+        if (currentQuestion === Object.keys(this.state.test).length) {
             alert(`Ваш результат - ${points}`)
             this.setState({
                 startTest: false,
@@ -188,16 +196,7 @@ class Tests extends React.Component {
                         value: 'Начать',
                     }
                 ],
-                test: [
-                    {
-                        original: 'Hello',
-                        translate: 'Привет'
-                    },
-                    {
-                        original: 'World',
-                        translate: 'Мир'
-                    }
-                ],
+                test: {},
                 currentQuestion: 0,
                 points: 0
             })
@@ -212,7 +211,7 @@ class Tests extends React.Component {
 
                     {this.state.startTest
                         ? <form onSubmit={event => this.testSubmitHandler(event)}>
-                            <span>Вопрос {this.state.currentQuestion+1} из {this.state.test.length}</span>
+                            <span>Вопрос {this.state.currentQuestion+1} из {Object.keys(this.state.test).length}</span>
                             {
                                 this.state.inputsTest.map((input, index) => {
                                     return <Input
@@ -241,6 +240,7 @@ class Tests extends React.Component {
                                     name={input.name}
                                     type={input.type}
                                     title={input.title || null}
+                                    min={input.minLength}
                                     value={input.value || ''}
                                     onChange={input.type === 'number'
                                         ? event => this.inputsParametersChangeHandler(event): null}

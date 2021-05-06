@@ -8,7 +8,7 @@ import Auth from './pages/Auth/Auth'
 
 class App extends React.Component {
     state = {
-        isAuth: false
+        isAuth: true
     }
 
     render() {
