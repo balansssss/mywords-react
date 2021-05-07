@@ -91,9 +91,17 @@ class Main extends React.Component {
         }
     }
 
+    logout = () => {
+        localStorage.removeItem('token')
+        localStorage.removeItem('userId')
+        localStorage.removeItem('expirationDate')
+        document.location.reload()
+    }
+
     render() {
         return (
             <div className={classes.container} onWheel={this.wheelHandler}>
+                <a className={classes.logout} onClick={this.logout}>Выйти</a>
                 <React.Fragment>
                     <NavItem title='Словарь' path='/vocabulary' className='nav_left' />
                 {

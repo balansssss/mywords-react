@@ -8,7 +8,7 @@ import Auth from './pages/Auth/Auth'
 
 class App extends React.Component {
     state = {
-        isAuth: true
+        isAuth: Boolean(localStorage.getItem('token'))
     }
 
     render() {

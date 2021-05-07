@@ -31,6 +31,14 @@
     }
   }
 
+  .logout {
+    cursor: pointer;
+    position: absolute;
+    right: 30px;
+    top: 10px;
+    padding-bottom: 5px;
+  }
+
   form {
     animation: slideUp 1.5s ease;
   }
