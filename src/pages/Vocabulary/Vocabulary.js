@@ -7,10 +7,12 @@ import DeleteIcon from './cancel.svg'
 import axios from '../../axios/axios'
 import Loader from '../../components/Loader/Loader'
 
+const userId = localStorage.getItem('userId')
+
 class Vocabulary extends React.Component {
     state = {
         loading: true,
-        words: [],
+        words: {},
         stringSearch: '',
         typeSearch: 'original',
         resultsSearch: []
@@ -23,9 +25,10 @@ class Vocabulary extends React.Component {
     inputChangeHandler = event => {
         const value = event.target.value
         const resultWords =[]
-        this.state.words.forEach(word=>{
-            if (word[this.state.typeSearch].toLowerCase().indexOf(value.toLowerCase()) !== -1) {
-                resultWords.push(word)
+        Object.keys(this.state.words).forEach(word=>{
+            console.log(word)
+            if (this.state.words[word][this.state.typeSearch].toLowerCase().indexOf(value.toLowerCase()) !== -1) {
+                resultWords.push(this.state.words[word])
             }
         })
         this.setState({
@@ -47,6 +50,7 @@ class Vocabulary extends React.Component {
         const editTranslate = prompt('Перевод', words[id].translate)
         if (editOriginal && editTranslate) {
             const word = {
+                userId,
                 original: editOriginal[0].toUpperCase() + editOriginal.substring(1),
                 translate: editTranslate[0].toUpperCase() + editTranslate.substring(1)
             }
@@ -92,10 +96,18 @@ class Vocabulary extends React.Component {
     }
 
     componentDidMount = async () => {
-        const words = await axios.get('/words.json')
+        const words = {}
+        await axios.get('/words.json').then(response => {
+            const dataKeys = Object.keys(response.data)
+            dataKeys.forEach(data => {
+                if (response.data[data].userId === localStorage.getItem('userId')) {
+                    words[data] = response.data[data]
+                }
+            })
+        })
         this.setState({
             loading: false,
-            words: words.data
+            words
         })
     }
 
@@ -135,7 +147,7 @@ class Vocabulary extends React.Component {
                                         <tbody>
                                         {
                                             this.state.resultsSearch.length === 0
-                                                ? this.state.words && this.state.stringSearch.length === 0
+                                                ? Object.keys(this.state.words).length > 0 && this.state.stringSearch.length === 0
                                                 ? this.renderTr(this.state.words)
                                                 : <tr>
                                                     <td colSpan='4'>Слова не найдены.</td>

@@ -97,10 +97,18 @@ class Tests extends React.Component {
             const typeTest = this.state.typeTest
             const inputsTest = [...this.state.inputsTest]
             try {
+                let words = {}
                 let test = {}
                 await axios.get('/words.json').then(response => {
-                    Object.keys(response.data).slice(min-1,max).map(i => {
-                        test[i] = response.data[i]
+                    const dataKeys = Object.keys(response.data)
+                    dataKeys.forEach(data => {
+                        if (response.data[data].userId === localStorage.getItem('userId')) {
+                            words[data] = response.data[data]
+                        }
+                    })
+                    console.log(test)
+                    Object.keys(words).slice(min-1,max).map(i => {
+                        test[i] = words[i]
                     })
                 })
 
@@ -183,6 +191,7 @@ class Tests extends React.Component {
                         type: 'number',
                         name: 'min',
                         title: 'Номер слова - начало теста',
+                        min: 1,
                         value: 1,
                     },
                     {

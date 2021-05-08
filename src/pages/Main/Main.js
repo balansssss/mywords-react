@@ -80,7 +80,7 @@ class Main extends React.Component {
             alert('Укажите правильную длину слова/перевода.')
         } else {
             try {
-                await axios.post('/words.json',{original, translate})
+                await axios.post('/words.json',{userId: localStorage.getItem('userId') ,original, translate})
                 alert('Слово добавлено!')
                 this.setState({
                     inputs
