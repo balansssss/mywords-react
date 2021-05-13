@@ -2,11 +2,11 @@ import React from 'react'
 import classes from './Main.module.scss'
 import NavItem from '../../components/NavItem/NavItem'
 import Input from '../../components/Input/Input'
-import axios from '../../axios/axios'
+import {connect} from 'react-redux'
+import {showForm, wheelHandler, onSubmitHandler} from '../../redux/actions/main'
 
 class Main extends React.Component {
     state = {
-        onWheel: false,
         inputs: [
             {
                 type: 'text',
@@ -29,25 +29,6 @@ class Main extends React.Component {
         ]
     }
 
-    wheelHandler = event => {
-        const pos = event.deltaY
-        if (pos>0 && !this.state.onWheel) {
-            this.setState({
-                onWheel: true
-            })
-        } else if (pos<0 && this.state.onWheel) {
-            this.setState({
-                onWheel: false
-            })
-        }
-    }
-
-    showForm = () => {
-        this.setState({
-            onWheel: true
-        })
-    }
-
     onChangeHandler = (event, nameInput) => {
         const value = event.target.value
         const inputs = [...this.state.inputs]
@@ -63,32 +44,11 @@ class Main extends React.Component {
 
     onSubmitHandler = async event => {
         event.preventDefault()
-        let original = ''
-        let translate = ''
-        const inputs = [...this.state.inputs]
-        inputs.forEach(input => {
-            if (input.name === 'word_original') {
-                original = input.value[0].toUpperCase() + input.value.substring(1)
-                input.value = ''
-            }
-            if (input.name === 'word_translate') {
-                translate = input.value[0].toUpperCase() + input.value.substring(1)
-                input.value = ''
-            }
+        await this.props.onSubmitHandler(this.state).then((response)=>{
+            this.setState({
+                inputs: response
+            })
         })
-        if (original.length < 2 || translate.length < 2) {
-            alert('Укажите правильную длину слова/перевода.')
-        } else {
-            try {
-                await axios.post('/words.json',{userId: localStorage.getItem('userId') ,original, translate})
-                alert('Слово добавлено!')
-                this.setState({
-                    inputs
-                })
-            } catch(e) {
-                console.log(e)
-            }
-        }
     }
 
     logout = () => {
@@ -98,14 +58,18 @@ class Main extends React.Component {
         document.location.reload()
     }
 
+    componentDidMount() {
+        setTimeout(this.logout,24*60*60*1000)
+    }
+
     render() {
         return (
-            <div className={classes.container} onWheel={this.wheelHandler}>
+            <div className={classes.container} onWheel={this.props.wheelHandler}>
                 <a className={classes.logout} onClick={this.logout}>Выйти</a>
                 <React.Fragment>
                     <NavItem title='Словарь' path='/vocabulary' className='nav_left' />
                 {
-                    this.state.onWheel
+                    this.props.onWheel
                         ? <form onSubmit={this.onSubmitHandler}>
                             <span style={{textAlign: 'center'}}>Новое слово</span>
                             {this.state.inputs.map((input, index)=>{
@@ -123,7 +87,7 @@ class Main extends React.Component {
                         :
                             <div className={classes.container_column}>
                                 <h1 className={classes.container_name}>MyWords</h1>
-                                <span onClick={this.showForm} className={classes.show_list}>Добавить слово</span>
+                                <span onClick={this.props.showForm} className={classes.show_list}>Добавить слово</span>
                             </div>
 
                 }
@@ -135,4 +99,18 @@ class Main extends React.Component {
     }
 }
 
-export default Main
+const mapStateToProps = state => {
+    return {
+        onWheel: state.mainReducer.onWheel
+    }
+}
+
+const mapDispatchToProps = dispatch => {
+    return {
+        wheelHandler: event => dispatch(wheelHandler(event)),
+        showForm: () => dispatch(showForm()),
+        onSubmitHandler: state => dispatch(onSubmitHandler(state))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Main)

@@ -2,13 +2,12 @@ import React from 'react'
 import classes from './Tests.module.scss'
 import Input from '../../components/Input/Input'
 import NavItem from '../../components/NavItem/NavItem'
-import axios from '../../axios/axios'
+import {connect} from 'react-redux'
+import {selectChangeHandler, startTest, testSubmitHandler} from '../../redux/actions/tests'
 
 class Tests extends React.Component {
 
     state = {
-        startTest: false,
-        typeTest: 'original',
         inputsTest: [
             {
                 type: 'text',
@@ -49,17 +48,7 @@ class Tests extends React.Component {
                 type: 'submit',
                 value: 'Начать',
             }
-        ],
-        test: {},
-        currentQuestion: 0,
-        points: 0
-    }
-
-    selectChangeHandler = event => {
-        const typeTest = event.target.value
-        this.setState({
-            typeTest
-        })
+        ]
     }
 
     inputsTestChangeHandler = (event, nameInput) => {
@@ -89,128 +78,21 @@ class Tests extends React.Component {
         })
     }
 
-    startTest = async event => {
+    startTest = event => {
         event.preventDefault()
-        const min = Number(this.state.inputsParameters[0].value)
-        const max = Number(this.state.inputsParameters[1].value)
-        if (min <= max && min >= Number(this.state.inputsParameters[0].min)) {
-            const typeTest = this.state.typeTest
-            const inputsTest = [...this.state.inputsTest]
-            try {
-                let words = {}
-                let test = {}
-                await axios.get('/words.json').then(response => {
-                    const dataKeys = Object.keys(response.data)
-                    dataKeys.forEach(data => {
-                        if (response.data[data].userId === localStorage.getItem('userId')) {
-                            words[data] = response.data[data]
-                        }
-                    })
-                    console.log(test)
-                    Object.keys(words).slice(min-1,max).map(i => {
-                        test[i] = words[i]
-                    })
-                })
-
-                this.setState({
-                    test
-                })
-                inputsTest.forEach(input => {
-                    if (input.name === `word_${typeTest}`) {
-                        input.value = this.state.test[Object.keys(this.state.test)[0]][typeTest]
-                        input.readonly = true
-                    }
-                })
-                this.setState({
-                    startTest: true,
-                    inputsTest
-                })
-            } catch(e) {
-                console.log(e)
-            }
-
-        } else {
-            alert('Некоректнные данные')
-        }
-
+        this.props.startTest(this.state)
     }
 
-    testSubmitHandler = event => {
+    testSubmitHandler = async event => {
         event.preventDefault()
-        let currentQuestion = this.state.currentQuestion
-        let points = this.state.points
-        let startTest = true
-        const inputsTest = [...this.state.inputsTest]
-        let checkType = this.state.typeTest === 'original' ? 'translate' : 'original'
-        inputsTest.forEach(input => {
-            if (input.name === `word_${checkType}`) {
-                if (input.value.toLowerCase() === this.state.test[Object.keys(this.state.test)[currentQuestion]][checkType].toLowerCase()) {
-                    points++
-                }
-                input.value = ''
-            } else if (input.name === `word_${this.state.typeTest}` && currentQuestion + 1 < Object.keys(this.state.test).length) {
-                input.value = this.state.test[Object.keys(this.state.test)[currentQuestion + 1]][this.state.typeTest]
+        await this.props.testSubmitHandler(this.state).then(response => {
+            if (response) {
+                this.setState({
+                    inputsTest: response.inputsTest,
+                    inputsParameters: response.inputsParameters
+                })
             }
         })
-        currentQuestion++
-        this.setState({
-            inputsTest,
-            currentQuestion,
-            points,
-            startTest
-        })
-        if (currentQuestion === Object.keys(this.state.test).length) {
-            alert(`Ваш результат - ${points}`)
-            this.setState({
-                startTest: false,
-                typeTest: 'original',
-                inputsTest: [
-                    {
-                        type: 'text',
-                        name: 'word_original',
-                        placeholder: '',
-                        value: '',
-                        title: 'Минимальная длина слова 2',
-                        readonly: false
-                    },
-                    {
-                        type: 'text',
-                        name: 'word_translate',
-                        placeholder: '',
-                        value: '',
-                        title: 'Минимальная длина слова 2',
-                        readonly: false
-                    },
-                    {
-                        type: 'submit',
-                        value: 'Далее',
-                    }
-                ],
-                inputsParameters: [
-                    {
-                        type: 'number',
-                        name: 'min',
-                        title: 'Номер слова - начало теста',
-                        min: 1,
-                        value: 1,
-                    },
-                    {
-                        type: 'number',
-                        name: 'max',
-                        title: 'Номер слова - окончание теста',
-                        value: 1,
-                    },
-                    {
-                        type: 'submit',
-                        value: 'Начать',
-                    }
-                ],
-                test: {},
-                currentQuestion: 0,
-                points: 0
-            })
-        }
-
     }
 
     render() {
@@ -218,9 +100,9 @@ class Tests extends React.Component {
             <div className={classes.container}>
                 <NavItem title='Главная' path='/' className='nav_left'/>
 
-                    {this.state.startTest
+                    {this.props.statusTest
                         ? <form onSubmit={event => this.testSubmitHandler(event)}>
-                            <span>Вопрос {this.state.currentQuestion+1} из {Object.keys(this.state.test).length}</span>
+                            <span>Вопрос {this.props.currentQuestion+1} из {Object.keys(this.props.test).length}</span>
                             {
                                 this.state.inputsTest.map((input, index) => {
                                     return <Input
@@ -238,7 +120,7 @@ class Tests extends React.Component {
                             </form>
                         : <form onSubmit={event => this.startTest(event)}>
                             <span>Параметры теста:</span>
-                            <select onChange={this.selectChangeHandler}>
+                            <select onChange={this.props.selectChangeHandler}>
                                 <option value='original'>Оригинал</option>
                                 <option value='translate'>Перевод</option>
                             </select>
@@ -265,4 +147,22 @@ class Tests extends React.Component {
     }
 }
 
-export default Tests
+const mapStateToProps = state => {
+    return {
+        statusTest: state.testsReducer.statusTest,
+        typeTest: state.testsReducer.typeTest,
+        test: state.testsReducer.test,
+        currentQuestion: state.testsReducer.currentQuestion,
+        points: state.testsReducer.points
+    }
+}
+
+const mapDispatchToProps = dispatch => {
+    return {
+        selectChangeHandler: event => dispatch(selectChangeHandler(event)),
+        startTest: state => dispatch(startTest(state)),
+        testSubmitHandler: state => dispatch(testSubmitHandler(state))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Tests)

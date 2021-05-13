@@ -3,24 +3,12 @@ import classes from './Auth.module.scss'
 import logo from './logo2.png'
 import translate from './translate.png'
 import Input from '../../components/Input/Input'
-import axios from 'axios'
-
-const validateEmail = email => {
-    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(String(email).toLowerCase());
-}
-
-const validatePassword = password => {
-    if (password.length < 3) {
-        password = false
-    }
-    return password
-}
+import {connect} from 'react-redux'
+import {visibleForm, authUser} from '../../redux/actions/auth'
 
 class Auth extends React.Component {
 
     state = {
-        showForm: false,
         formInputs: [
             {
                 type: 'email',
@@ -47,18 +35,6 @@ class Auth extends React.Component {
         ]
     }
 
-    showForm = () => {
-        this.setState({
-            showForm: true
-        })
-    }
-
-    hideForm = () => {
-        this.setState({
-            showForm: false
-        })
-    }
-
     onChangeHandler = (event, inputName) => {
         const formInputs = [...this.state.formInputs]
         formInputs.forEach(input => {
@@ -71,45 +47,14 @@ class Auth extends React.Component {
         })
     }
 
-    authUser = async (isLogin) => {
-        const formInputs = [...this.state.formInputs]
-        const email = formInputs[0].value
-        const password = formInputs[1].value
-        if (validateEmail(email) && validatePassword(password)) {
-            let url = 'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyA5D0FxckZC8-6l8GKTXjE4mZF1T9MNTFA'
-
-            if (isLogin) {
-                url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyA5D0FxckZC8-6l8GKTXjE4mZF1T9MNTFA'
-            }
-
-            try {
-                const response = await axios.post(url, {
-                    email, password, returnSecureToken: true
+    authUser = async isLogin => {
+        await this.props.authUser(this.state, isLogin).then(response => {
+            if (response) {
+                this.setState({
+                    formInputs: response
                 })
-                const data = response.data
-
-                const expirationDate = new Date(new Date().getTime() + data.expiresIn * 3600)
-
-                if (isLogin) {
-                    localStorage.setItem('token', data.idToken)
-                    localStorage.setItem('userId', data.localId)
-                    localStorage.setItem('expirationDate', expirationDate)
-                    document.location.reload()
-                } else {
-                    alert('Регистрация прошла успешна!')
-                    formInputs[0].value = ''
-                    formInputs[1].value = ''
-                    this.setState({
-                        formInputs
-                    })
-                }
-            } catch(e) {
-                console.log(e)
-                alert('Email или пароль неверные! Попробуйте ещё.')
             }
-        } else {
-            alert('Введите корректные данные!')
-        }
+        })
     }
 
     render() {
@@ -119,12 +64,12 @@ class Auth extends React.Component {
                     <img src={logo} className={classes.logo}/>
                 </div>
 
-                {this.state.showForm
+                {this.props.showForm
                     ? <div className={classes.content+' '+classes.slideUp} style={{alignItems: 'center',
                         justifyContent: 'center',
                         flexDirection: 'column'
                         }}>
-                        <span className={classes.back_button} onClick={this.hideForm}>Назад &#8635;</span>
+                        <span className={classes.back_button} onClick={()=> this.props.visibleForm(false)}>Назад &#8635;</span>
                         <form id="signInForm" className={classes.forms}>
                             <label>Авторизация</label>
                             { this.state.formInputs.map((input, index) => {
@@ -145,7 +90,7 @@ class Auth extends React.Component {
                         <div className={classes.content_info}>
                             <h2>Твой<br/>персональный<br/>словарь</h2>
                             <div className={classes.content_footer}>
-                                <button onClick={this.showForm} className={classes.main_button}>Начать &#10148;</button>
+                                <button onClick={() => this.props.visibleForm(true)} className={classes.main_button}>Начать &#10148;</button>
                                 <span>WEB-приложение является универсальным словарем, содержащее в себе интерфейсы изучения и тестирования иностранных языков.</span>
                             </div>
                         </div>
@@ -159,4 +104,17 @@ class Auth extends React.Component {
     }
 }
 
-export default Auth
+const mapStateToProps = state => {
+    return {
+        showForm: state.authReducer.showForm
+    }
+}
+
+const mapDispatchToProps = dispatch => {
+    return {
+        visibleForm: visible => dispatch(visibleForm(visible)),
+        authUser: (state, isLogin) => dispatch(authUser(state, isLogin))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Auth)

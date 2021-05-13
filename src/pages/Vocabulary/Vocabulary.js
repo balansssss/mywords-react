@@ -6,77 +6,15 @@ import EditIcon from './pencil.svg'
 import DeleteIcon from './cancel.svg'
 import axios from '../../axios/axios'
 import Loader from '../../components/Loader/Loader'
+import {connect} from 'react-redux'
+import {editWord, deleteWord, getWords, inputChangeHandler, selectChangeHandler} from '../../redux/actions/vocabulary'
 
 const userId = localStorage.getItem('userId')
 
 class Vocabulary extends React.Component {
-    state = {
-        loading: true,
-        words: {},
-        stringSearch: '',
-        typeSearch: 'original',
-        resultsSearch: []
-    }
 
     submitHandler = event => {
         event.preventDefault()
-    }
-
-    inputChangeHandler = event => {
-        const value = event.target.value
-        const resultWords =[]
-        Object.keys(this.state.words).forEach(word=>{
-            console.log(word)
-            if (this.state.words[word][this.state.typeSearch].toLowerCase().indexOf(value.toLowerCase()) !== -1) {
-                resultWords.push(this.state.words[word])
-            }
-        })
-        this.setState({
-            stringSearch: value,
-            resultsSearch: resultWords
-        })
-    }
-
-    selectChangeHandler = event => {
-        const typeSearch = event.target.value
-        this.setState({
-            typeSearch
-        })
-    }
-
-    editWord = async id => {
-        const words = {...this.state.words}
-        const editOriginal = prompt('Слово', words[id].original)
-        const editTranslate = prompt('Перевод', words[id].translate)
-        if (editOriginal && editTranslate) {
-            const word = {
-                userId,
-                original: editOriginal[0].toUpperCase() + editOriginal.substring(1),
-                translate: editTranslate[0].toUpperCase() + editTranslate.substring(1)
-            }
-            try {
-                await axios.put(`/words/${id}.json`, word)
-                words[id] = word
-                this.setState({
-                    words
-                })
-            } catch (e) {
-                console.log(e)
-            }
-        }
-    }
-
-    deleteWord = async id => {
-        const words = {...this.state.words}
-        try {
-            await axios.delete(`/words/${id}.json`)
-            delete words[id]
-            this.setState({
-                words
-            })
-        } catch(e) {
-            console.log('Error', e)
-        }
     }
 
     renderTr = (arr) => {
@@ -87,28 +25,16 @@ class Vocabulary extends React.Component {
                     <td>{arr[word].original}</td>
                     <td>{arr[word].translate}</td>
                     <td className={classes.icon}>
-                        <img src={EditIcon} alt="Редактировать" title="Редактировать" onClick={this.editWord.bind(this, word)}/>
-                        <img src={DeleteIcon} alt="Удалить" title="Удалить" onClick={this.deleteWord.bind(this, word)}/>
+                        <img src={EditIcon} alt="Редактировать" title="Редактировать" onClick={this.props.editWord.bind(this, word)}/>
+                        <img src={DeleteIcon} alt="Удалить" title="Удалить" onClick={this.props.deleteWord.bind(this, word)}/>
                     </td>
                 </tr>
             )
         })
     }
 
-    componentDidMount = async () => {
-        const words = {}
-        await axios.get('/words.json').then(response => {
-            const dataKeys = Object.keys(response.data)
-            dataKeys.forEach(data => {
-                if (response.data[data].userId === localStorage.getItem('userId')) {
-                    words[data] = response.data[data]
-                }
-            })
-        })
-        this.setState({
-            loading: false,
-            words
-        })
+    componentDidMount = () => {
+        this.props.getWords()
     }
 
     render() {
@@ -123,17 +49,17 @@ class Vocabulary extends React.Component {
                                 type='text'
                                 name='search_word'
                                 placeholder='Поиск слова'
-                                value={this.state.stringSearch}
-                                onChange={this.inputChangeHandler}
+                                value={this.props.stringSearch}
+                                onChange={this.props.inputChangeHandler}
                             />
-                            <select onChange={this.selectChangeHandler}>
+                            <select onChange={this.props.selectChangeHandler}>
                                 <option value='original'>Поиск по слову</option>
                                 <option value='translate'>Поиск по переводу</option>
                             </select>
                         </form>
 
                         {
-                            this.state.loading
+                            this.props.loading
                                 ? <Loader/>
                                 : <table className={classes.words}>
                                         <thead>
@@ -146,13 +72,13 @@ class Vocabulary extends React.Component {
                                         </thead>
                                         <tbody>
                                         {
-                                            this.state.resultsSearch.length === 0
-                                                ? Object.keys(this.state.words).length > 0 && this.state.stringSearch.length === 0
-                                                ? this.renderTr(this.state.words)
+                                            this.props.resultsSearch.length === 0
+                                                ? Object.keys(this.props.words).length > 0 && this.props.stringSearch.length === 0
+                                                ? this.renderTr(this.props.words)
                                                 : <tr>
                                                     <td colSpan='4'>Слова не найдены.</td>
                                                 </tr>
-                                                : this.renderTr(this.state.resultsSearch)
+                                                : this.renderTr(this.props.resultsSearch)
                                         }
                                         </tbody>
                                     </table>
@@ -165,7 +91,26 @@ class Vocabulary extends React.Component {
             </div>
         )
     }
-
 }
 
-export default Vocabulary
+const mapStateToProps = state => {
+    return {
+        loading: state.vocabularyReducer.loading,
+        words: state.vocabularyReducer.words,
+        stringSearch: state.vocabularyReducer.stringSearch,
+        typeSearch: state.vocabularyReducer.typeSearch,
+        resultsSearch: state.vocabularyReducer.resultsSearch
+    }
+}
+
+const mapDispatchToProps = dispatch => {
+    return {
+        inputChangeHandler: event => dispatch(inputChangeHandler(event)),
+        getWords: () => dispatch(getWords()),
+        selectChangeHandler: event => dispatch(selectChangeHandler(event)),
+        editWord: word => dispatch(editWord(word)),
+        deleteWord: word => dispatch(deleteWord(word))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Vocabulary)
