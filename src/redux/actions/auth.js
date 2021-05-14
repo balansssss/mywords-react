@@ -37,8 +37,9 @@ export const authUser = (state, isLogin) => {
                     email, password, returnSecureToken: true
                 })
                 const data = response.data
-
                 const expirationDate = new Date(new Date().getTime() + data.expiresIn * 3600)
+
+                dispatch(autoLogout(data.expiresIn))
 
                 if (isLogin) {
                     localStorage.setItem('token', data.idToken)
@@ -59,4 +60,19 @@ export const authUser = (state, isLogin) => {
             alert('Введите корректные данные!')
         }
     }
+}
+
+export function autoLogout(time) {
+    return dispatch => {
+        setTimeout(() => {
+            dispatch(logout())
+        }, time * 1000)
+    }
+}
+
+export const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('userId')
+    localStorage.removeItem('expirationDate')
+    document.location.reload()
 }

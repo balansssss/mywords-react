@@ -81,5 +81,35 @@ a {
       }
     }
   }
+}
 
+@media screen and (max-width: 550px) {
+  .container {
+    & .container_name {
+      font-size: 55px;
+    }
+
+    & form > * {
+      font-size: 12px;
+    }
+
+    & .container_column {
+      & .show_list {
+        font-size: 12px;
+      }
+    }
+  }
+
+  a {
+    font-size: 12px;
+  }
+
+}
+
+@media screen and (max-width: 350px) {
+  .container {
+    & .container_name {
+      font-size: 46px;
+    }
+  }
 }

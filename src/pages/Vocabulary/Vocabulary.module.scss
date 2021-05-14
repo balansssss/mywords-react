@@ -68,6 +68,34 @@
         }
       }
     }
+  }
+}
 
+@media screen and (max-width: 550px) {
+  .middle_container {
+    & form {
+      & input, select {
+        font-size: 12px;
+      }
+    }
+
+    .words {
+      font-size: 12px;
+    }
+  }
+
+}
+
+@media screen and (max-width: 350px) {
+  .middle_container {
+    & form {
+      & input, select {
+        font-size: 10px;
+      }
+    }
+
+    .words {
+      font-size: 10px;
+    }
   }
 }

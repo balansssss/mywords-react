@@ -4,6 +4,7 @@ import NavItem from '../../components/NavItem/NavItem'
 import Input from '../../components/Input/Input'
 import {connect} from 'react-redux'
 import {showForm, wheelHandler, onSubmitHandler} from '../../redux/actions/main'
+import {logout} from '../../redux/actions/auth'
 
 class Main extends React.Component {
     state = {
@@ -51,13 +52,6 @@ class Main extends React.Component {
         })
     }
 
-    logout = () => {
-        localStorage.removeItem('token')
-        localStorage.removeItem('userId')
-        localStorage.removeItem('expirationDate')
-        document.location.reload()
-    }
-
     componentDidMount() {
         setTimeout(this.logout,24*60*60*1000)
     }
@@ -65,7 +59,7 @@ class Main extends React.Component {
     render() {
         return (
             <div className={classes.container} onWheel={this.props.wheelHandler}>
-                <a className={classes.logout} onClick={this.logout}>Выйти</a>
+                <a className={classes.logout} onClick={this.props.logout}>Выйти</a>
                 <React.Fragment>
                     <NavItem title='Словарь' path='/vocabulary' className='nav_left' />
                 {
@@ -109,7 +103,8 @@ const mapDispatchToProps = dispatch => {
     return {
         wheelHandler: event => dispatch(wheelHandler(event)),
         showForm: () => dispatch(showForm()),
-        onSubmitHandler: state => dispatch(onSubmitHandler(state))
+        onSubmitHandler: state => dispatch(onSubmitHandler(state)),
+        logout: () => dispatch(logout())
     }
 }
 
